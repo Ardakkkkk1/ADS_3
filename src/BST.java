@@ -1,16 +1,15 @@
 import java.util.*;
 
 /**
- * A simple generic Binary Search Tree (BST) implementation.
- * Supports insert (put), search (get), delete, and in-order iteration over keys.
+ * A generic Binary Search Tree (BST) with support for size tracking,
+ * in-order traversal, and iteration over key-value entries.
  */
-public class BST<K extends Comparable<K>, V> {
-    // Node class for BST
+public class BST<K extends Comparable<K>, V> implements Iterable<BST.Entry<K, V>> {
+    // Node class
     private class Node {
         K key;
         V val;
         Node left, right;
-
         Node(K key, V val) {
             this.key = key;
             this.val = val;
@@ -18,18 +17,41 @@ public class BST<K extends Comparable<K>, V> {
     }
 
     private Node root;
+    private int size = 0;
 
     /**
-     * Insert a key-value pair into the BST.
-     * If the key already exists, update its value.
+     * An entry in the BST containing both key and value.
+     */
+    public static class Entry<K, V> {
+        private final K key;
+        private final V value;
+        public Entry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+        public K getKey() { return key; }
+        public V getValue() { return value; }
+    }
+
+    /**
+     * @return the number of key-value pairs in the tree
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * Insert or update a key-value pair.
      */
     public void put(K key, V val) {
         root = put(root, key, val);
     }
 
-    // Recursive helper for put
     private Node put(Node x, K key, V val) {
-        if (x == null) return new Node(key, val);
+        if (x == null) {
+            size++;
+            return new Node(key, val);
+        }
         int cmp = key.compareTo(x.key);
         if (cmp < 0)      x.left  = put(x.left,  key, val);
         else if (cmp > 0) x.right = put(x.right, key, val);
@@ -38,8 +60,7 @@ public class BST<K extends Comparable<K>, V> {
     }
 
     /**
-     * Retrieve the value associated with the given key.
-     * @return the value, or null if key not found
+     * Retrieve the value for a given key.
      */
     public V get(K key) {
         Node x = root;
@@ -53,23 +74,21 @@ public class BST<K extends Comparable<K>, V> {
     }
 
     /**
-     * Delete the node with the given key (if present).
+     * Delete the node with the specified key, if present.
      */
     public void delete(K key) {
         root = delete(root, key);
     }
 
-    // Recursive helper for delete
     private Node delete(Node x, K key) {
         if (x == null) return null;
         int cmp = key.compareTo(x.key);
-        if      (cmp < 0) x.left  = delete(x.left,  key);
+        if (cmp < 0)      x.left  = delete(x.left,  key);
         else if (cmp > 0) x.right = delete(x.right, key);
         else {
-            // Found node to delete
-            if (x.left  == null) return x.right;
+            size--;
+            if (x.left == null)  return x.right;
             if (x.right == null) return x.left;
-            // Two children: replace with successor
             Node t = x;
             Node min = min(t.right);
             x.key = min.key;
@@ -79,13 +98,11 @@ public class BST<K extends Comparable<K>, V> {
         return x;
     }
 
-    // Find minimum node in subtree
     private Node min(Node x) {
         while (x.left != null) x = x.left;
         return x;
     }
 
-    // Delete minimum node in subtree
     private Node deleteMin(Node x) {
         if (x.left == null) return x.right;
         x.left = deleteMin(x.left);
@@ -93,19 +110,19 @@ public class BST<K extends Comparable<K>, V> {
     }
 
     /**
-     * Return an iterable over the keys in ascending (in-order) order.
+     * Return an iterator over the entries (key-value pairs) in sorted order.
      */
-    public Iterable<K> iterator() {
-        List<K> keys = new ArrayList<>();
-        inorder(root, keys);
-        return keys;
+    @Override
+    public Iterator<Entry<K, V>> iterator() {
+        List<Entry<K, V>> list = new ArrayList<>();
+        inorder(root, list);
+        return list.iterator();
     }
 
-    // In-order traversal helper
-    private void inorder(Node x, List<K> list) {
+    private void inorder(Node x, List<Entry<K, V>> list) {
         if (x == null) return;
         inorder(x.left, list);
-        list.add(x.key);
+        list.add(new Entry<>(x.key, x.val));
         inorder(x.right, list);
     }
 }
